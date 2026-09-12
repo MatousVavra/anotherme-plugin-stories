@@ -1,0 +1,13 @@
+name: stories
+version: 0.1.0
+description: Create and list stories with optional audio
+author: AnotherMe
+entrypoint: plugin
+capabilities:
+  - routes
+  - ui
+dependencies: []
+ui:
+  tab: Stories
+  icon: stories
+  order: 30
