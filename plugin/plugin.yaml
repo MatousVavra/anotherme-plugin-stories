@@ -1,12 +1,14 @@
 name: stories
-version: 0.1.0
+version: 0.2.0
 description: Create and list stories with optional audio
 author: AnotherMe
 entrypoint: plugin
 capabilities:
   - routes
   - ui
-dependencies: []
+soft_dependencies:
+  - name: memory
+    enables: "extract people from stories"
 ui:
   tab: Stories
   icon: stories
