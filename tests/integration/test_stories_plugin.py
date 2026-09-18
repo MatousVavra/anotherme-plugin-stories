@@ -113,14 +113,24 @@ def test_stories_generate_creates_story_with_ai_content(client):
             "title": "AI Memory",
             "seed_question": "Tell me about Prague",
         })
-    assert resp.status_code == 201
-    data = resp.json()
-    assert data["title"] == "AI Memory"
-    assert "Prague" in data["content"]
+        assert resp.status_code == 202
+        data = resp.json()
+        assert data["title"] == "AI Memory"
+        assert data["path"].startswith("Stories/")
 
-    vault = Path(os.environ["VAULTS_DIR"]) / "test-main"
-    story_files = list((vault / "Stories").glob("*.md"))
-    assert any("AI-Memory" in f.name or "AI Memory" in f.name for f in story_files)
+        vault = Path(os.environ["VAULTS_DIR"]) / "test-main"
+        target = vault / data["path"]
+
+        content = ""
+        for _ in range(50):
+            content = target.read_text(encoding="utf-8")
+            if "Prague" in content:
+                break
+            client.get("/health")
+            time.sleep(0.1)
+
+    assert "Once upon a time in Prague." in content
+    assert "Generating..." not in content
 
 
 def test_delete_story(client):

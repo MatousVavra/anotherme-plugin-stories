@@ -3,24 +3,42 @@
         <div class="stories-library-full">
             <div class="stories-library-header">
                 <span class="stories-library-title">Stories</span>
-                <button class="stories-new-btn" @click="openComposer()">+ New Story</button>
+                <div class="stories-header-actions">
+                    <input class="stories-search" type="text" placeholder="Search stories..." x-model="search">
+                    <select class="stories-sort" x-model="sort" aria-label="Sort stories">
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="az">A&ndash;Z</option>
+                    </select>
+                    <button class="stories-generate-btn" @click="openComposer(true)">Generate story</button>
+                    <button class="stories-new-btn" @click="openComposer()">+ New Story</button>
+                </div>
             </div>
             <div class="story-list">
-                <template x-if="list.length === 0">
-                    <div class="timeline-empty">No stories yet</div>
+                <template x-if="filteredStories.length === 0">
+                    <div class="timeline-empty" x-text="list.length === 0 ? 'No stories yet' : 'No matching stories'"></div>
                 </template>
-                <template x-for="story in list" :key="story.path">
+                <template x-for="story in filteredStories" :key="story.path">
                     <div class="story-card-wrapper">
                         <button class="story-card" @click="openStory(story)">
                             <div class="story-card-title" x-text="story.filename.replace('.md', '')"></div>
                             <div class="story-card-date" x-text="AM.utils.formatDate(story.modified)"></div>
                             <div class="story-card-meta">
-                                <span class="text-label" x-show="!story.hasAudio">text</span>
+                                <span class="generating-badge" x-show="story.generating">Generating&#8230;</span>
+                                <span class="text-label" x-show="!story.hasAudio && !story.generating">text</span>
                                 <span class="audio-badge" x-show="story.hasAudio">Audio <span class="audio-icon">&#9684;</span></span>
                             </div>
                         </button>
-                        <button class="story-delete-btn" @click="deleteStory(story)" title="Delete">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        <button
+                            class="story-delete-btn"
+                            :class="{ confirming: confirmDelete === story.path }"
+                            @click="requestDelete(story)"
+                            :title="confirmDelete === story.path ? 'Click again to confirm' : 'Delete story'"
+                        >
+                            <template x-if="confirmDelete === story.path"><span>Sure?</span></template>
+                            <template x-if="confirmDelete !== story.path">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </template>
                         </button>
                     </div>
                 </template>
@@ -32,7 +50,10 @@
         <div class="story-reader">
             <button class="story-back-btn" @click="closeStory()">&#8592; Back</button>
             <div class="story-reader-title" x-text="selectedStory.filename.replace('.md', '')"></div>
-            <div class="story-reader-content" x-html="AM.utils.renderMarkdown(storyContent)"></div>
+            <template x-if="audioFile">
+                <audio controls class="story-audio" :src="'/plugins/stories/audio/' + encodeURIComponent(audioFile)"></audio>
+            </template>
+            <div class="story-reader-content" x-html="AM.utils.renderMarkdown(storyContent)" @click="handleReaderClick($event)"></div>
         </div>
     </template>
 </div>
